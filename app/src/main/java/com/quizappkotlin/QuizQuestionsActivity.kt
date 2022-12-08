@@ -1,17 +1,17 @@
 package com.quizappkotlin
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.core.content.ContextCompat
 
 class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
+
     private var progressBar: ProgressBar?=null
     private var tvProgress: TextView? = null
     private var tvQuestion:TextView? = null
@@ -21,6 +21,8 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
     private var tvOptionThree:TextView? = null
     private var tvOptionFour:TextView? = null
     private var buttonSubmit: Button? = null
+
+
     private var mCurrentPosition: Int = 1 // Default and the first question position
     private var mQuestionsList: ArrayList<Questions>? = null
     private var mCorrectAnswers: Int = 0
@@ -32,7 +34,7 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
 
         //Get the NAME from intent and assign it the variable
         // START
-       // mUserName = intent.getStringExtra(Constants.USER_NAME)
+        mUserName = intent.getStringExtra(Constants.USER_NAME)
         // END
         //connect to the view by its id
         progressBar=findViewById(R.id.progressBar)
@@ -46,7 +48,7 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
         buttonSubmit = findViewById(R.id.btn_submit)
         mQuestionsList = Constants.getQuestions()
 
-       // setQuestion()
+        // setQuestion()
 
         tvOptionOne?.setOnClickListener(this)
         tvOptionTwo?.setOnClickListener(this)
@@ -54,17 +56,26 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
         tvOptionFour?.setOnClickListener(this)
         buttonSubmit?.setOnClickListener (this)
 
-       mQuestionsList = Constants.getQuestions()
+        mQuestionsList = Constants.getQuestions()
 
         setQuestion()
 
     }
 
+
+
+
     private fun setQuestion() {
 
-
-        mCurrentPosition = 1
         val questions: Questions = mQuestionsList!![mCurrentPosition - 1]
+        defaultOptionsView()
+
+        if(mCurrentPosition == mQuestionsList!!.size){
+            buttonSubmit?.text = "FINISH"
+        }
+        else{
+            buttonSubmit?.text = "SUBMIT"
+        }
         ivImage?.setImageResource(questions.image)
         progressBar?.progress = mCurrentPosition
         tvProgress?.text = "$mCurrentPosition/${progressBar?.max}"
@@ -73,14 +84,21 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
         tvOptionTwo?.text = questions.optionsTwo
         tvOptionThree?.text = questions.optionsThree
         tvOptionFour?.text = questions.optionsFour
-
-        if(mCurrentPosition == mQuestionsList!!.size){
-            buttonSubmit?.text = "FINISH"
-        }
-        else{
-            buttonSubmit?.text = "SUBMIT"
-        }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     private fun defaultOptionsView(){
@@ -100,11 +118,104 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
             options.add(3,it)
         }
 
+
+
+
         for (option in options )
         {
             option.setTextColor(Color.parseColor("#7A8089"))
             option.typeface = Typeface.DEFAULT
             option.background = ContextCompat.getDrawable(this,R.drawable.default_option_border_bg)
+
+
+
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when(view?.id){
+
+            R.id.tv_option_one ->{
+                tvOptionOne?.let {
+                    selectedOptionView(it,1)
+                }
+            }
+
+
+
+            R.id.tv_option_two ->{
+                tvOptionTwo?.let {
+                    selectedOptionView(it,2)
+                }
+
+            }
+
+            R.id.tv_option_three ->{
+                tvOptionThree?.let {
+                    selectedOptionView(it,3)
+                }
+
+            }
+
+            R.id.tv_option_four ->{
+                tvOptionFour?.let {
+                    selectedOptionView(it,4)
+                }
+            }
+
+
+            R.id.btn_submit->{
+
+                if(mSelectedOptionPosition ==0){
+                    mCurrentPosition ++
+
+
+
+                    when{
+
+                        mCurrentPosition <= mQuestionsList!!.size ->{
+
+                            setQuestion()
+                        }
+                        else ->{
+
+
+
+                            val intent = Intent(this,ResultActivity::class.java)
+                            intent.putExtra(Constants.USER_NAME,mUserName)
+                            intent.putExtra(Constants.CORRECT_ANSWERS,mCorrectAnswers)
+                            intent.putExtra(Constants.TOTAL_QUESTIONS,mQuestionsList?.size)
+                            startActivity(intent)
+                            finish()
+
+                        }
+                    }
+                }
+                else{
+
+                    val question = mQuestionsList?.get(mCurrentPosition -1)
+                    // This is to check if the answer is wrong
+                    if(question!!.correctAnswer != mSelectedOptionPosition)
+                    {
+                        answerView(mSelectedOptionPosition,R.drawable.wrong_option_border_bg)
+                    }
+                    else{
+                        mCorrectAnswers ++
+                    }
+
+                    // This is for correct answer
+                    answerView(question.correctAnswer,R.drawable.correct_option_border_bg)
+
+
+                    if (mCurrentPosition == mQuestionsList!!.size) {
+                        buttonSubmit?.text = "FINISH"
+                    } else {
+                        buttonSubmit?.text = "GO TO NEXT QUESTION"
+                    }
+
+                    mSelectedOptionPosition = 0
+                }
+            }
         }
     }
 
@@ -117,31 +228,32 @@ class QuizQuestionsActivity : AppCompatActivity(),View.OnClickListener {
         tv.background = ContextCompat.getDrawable(this,R.drawable.correct_option_border_bg)
     }
 
-    override fun onClick(view: View?) {
-        when(view?.id){
+    private fun answerView(answer:Int,drawableView:Int)
+    {
+        when(answer){
+            1 ->{
+                tvOptionOne?.background = ContextCompat.getDrawable(this,drawableView)
 
-            R.id.tv_option_one ->{
-                tvOptionOne?.let {
-                    selectedOptionView(it,1)
-                }
+
+
             }
+            2 ->{
+                tvOptionTwo?.background = ContextCompat.getDrawable(this,drawableView)
 
-            R.id.tv_option_two ->{
-                tvOptionTwo?.let {
-                    selectedOptionView(it,2)
-                }
+
+
             }
+            3 ->{
+                tvOptionThree?.background = ContextCompat.getDrawable(this,drawableView)
 
-            R.id.tv_option_three ->{
-                tvOptionThree?.let {
-                    selectedOptionView(it,3)
-                }
+
+
             }
+            4 ->{
+                tvOptionFour?.background = ContextCompat.getDrawable(this,drawableView)
 
-            R.id.tv_option_four ->{
-                tvOptionFour?.let {
-                    selectedOptionView(it,4)
-                }
+
+
             }
         }
     }
